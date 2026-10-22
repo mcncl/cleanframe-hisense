@@ -59,6 +59,14 @@ they do not interrupt it by opening a second connection with the same identity.
 Their request key is delivered by `/api/config.js`; pairing credentials never
 leave the server. The service is intended for the home network.
 
+For agent-assisted menu editing, protected `POST /api/key` accepts a `key` of
+`up`, `down`, `left`, `right`, `ok` or `back`. It works only while CleanFrame is
+the TV's reported foreground app. Read `/api/status` after each key and wait for
+a fresh `runtime.observed_at` before using `runtime.location` to choose the next
+action. This edits preferences through the same menu as the physical remote.
+Power and other keys are rejected. Navigation requires an owner-authorised
+device task; announce any app launch or service restart.
+
 Home return is optional and disabled initially. When enabled in web settings,
 the service listens for the TV's `remote_launcher` state broadcast and opens
 CleanFrame. It does not poll for, or interrupt, streaming/Art Gallery states.

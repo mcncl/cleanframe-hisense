@@ -34,6 +34,9 @@ try {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CleanFrame-Key': key, ...extra }, body: JSON.stringify(value)
   });
   assert.equal(await statusOf(post('/api/launch', { id: 'native.unknown' })), 400);
+  assert.equal(await statusOf(post('/api/key', { key: 'power' })), 400);
+  assert.equal(await statusOf(post('/api/key', { key: 'down' })), 200);
+  assert.equal(await statusOf(post('/api/key', { key: 'ok' }, { Origin: 'https://unrelated.example' })), 403);
   assert.equal(await statusOf(post('/api/launch', { id: 'service.plex' }, { Origin: 'https://unrelated.example' })), 403);
   assert.equal(await statusOf(fetch(base + '/home/%2e%2e%2f.local/hisense/state/session.json')), 404);
   const fallback = await (await post('/api/launch', { id: 'service.smarters' })).json();

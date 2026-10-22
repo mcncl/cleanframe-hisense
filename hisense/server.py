@@ -312,6 +312,20 @@ class Bridge:
                 return {"sent": True, "destination": "TV Home" if target.endswith("home") else "TV menu"}
             raise ValueError("This shortcut is unavailable. Refresh the app list and try again.")
 
+    def key(self, key):
+        keys = {"up": "KEY_UP", "down": "KEY_DOWN", "left": "KEY_LEFT",
+                "right": "KEY_RIGHT", "ok": "KEY_OK", "back": "KEY_RETURNS"}
+        if key not in keys:
+            raise ValueError("Choose a navigation key: up, down, left, right, ok or back.")
+        with self.lock:
+            self._connect()
+            if not self.demo:
+                if (self.last_state or {}).get("appId") != APP_ID:
+                    raise ValueError("Open CleanFrame before sending navigation keys.")
+                remote = self.mqtt.topics["ui"].replace("/ui_service/", "/remote_service/")
+                self._publish(remote + "actions/sendkey", keys[key])
+            return {"sent": True}
+
     def install(self):
         with self.lock:
             self._connect()
@@ -468,6 +482,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Expected an object.")
             if path == "/api/launch":
                 return self.reply(self.bridge.launch(str(value.get("id", ""))))
+            if path == "/api/key":
+                return self.reply(self.bridge.key(str(value.get("key", ""))))
             if path == "/api/settings":
                 return self.reply(self.bridge.save_settings(value))
             if path == "/api/refresh":

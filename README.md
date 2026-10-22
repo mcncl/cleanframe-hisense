@@ -40,7 +40,7 @@ Initial pairing requires a locally supplied TV connection certificate. Your agen
 
 | Model | System / firmware | Confirmed working |
 | --- | --- | --- |
-| Hisense 55S7NAU CanvasTV (Australia) | VIDAA 9 · `V0000.09.60X.Q0609` | Home screen, remote navigation, appearance settings, Plex, SBS On Demand, ABC iview and Home return from Plex |
+| Hisense 55S7NAU CanvasTV (Australia) | VIDAA 9 · `V0000.09.60X.Q0609` | Home screen, remote navigation, appearance settings, Home return from Plex, and native Plex, SBS, ABC, IPTV Smarters and Stremio Lite apps |
 
 Other models are untested. Native Art Gallery behaviour, idle/wake, automatic startup and persistence after a TV restart still need physical confirmation. See [full compatibility notes](docs/tv-status.md). Reports from other owners are welcome.
 
