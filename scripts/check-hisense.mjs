@@ -15,9 +15,16 @@ const proc = spawn(process.env.CLEANFRAME_PYTHON || root + '/.local/venv/bin/pyt
 let output = '';
 proc.stderr.on('data', data => { output += data; });
 let browser;
+async function statusOf(pendingResponse) {
+  const response = await pendingResponse;
+  // Drain even status-only checks, especially JPEGs. Unread bodies can crash
+  // Node 22's HTTP parser when this HTTP/1.0 server closes the connection.
+  await response.arrayBuffer();
+  return response.status;
+}
 try {
   for (let i = 0; i < 80; i++) {
-    try { if ((await fetch(base + '/health')).ok) break; } catch {}
+    try { if (await statusOf(fetch(base + '/health')) === 200) break; } catch {}
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   assert.equal((await (await fetch(base + '/health')).json()).demo, true);
@@ -26,13 +33,13 @@ try {
   const post = (path, value, extra = {}) => fetch(base + path, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CleanFrame-Key': key, ...extra }, body: JSON.stringify(value)
   });
-  assert.equal((await post('/api/launch', { id: 'native.unknown' })).status, 400);
-  assert.equal((await post('/api/launch', { id: 'service.plex' }, { Origin: 'https://unrelated.example' })).status, 403);
-  assert.equal((await fetch(base + '/home/%2e%2e%2f.local/hisense/state/session.json')).status, 404);
+  assert.equal(await statusOf(post('/api/launch', { id: 'native.unknown' })), 400);
+  assert.equal(await statusOf(post('/api/launch', { id: 'service.plex' }, { Origin: 'https://unrelated.example' })), 403);
+  assert.equal(await statusOf(fetch(base + '/home/%2e%2e%2f.local/hisense/state/session.json')), 404);
   const fallback = await (await post('/api/launch', { id: 'service.smarters' })).json();
   assert.equal(fallback.destination, 'Fire TV Stick');
   assert.match(fallback.note, /Select IPTV Smarters/);
-  assert.equal((await post('/api/settings', { idle_seconds: 0, home_takeover: false })).status, 200);
+  assert.equal(await statusOf(post('/api/settings', { idle_seconds: 0, home_takeover: false })), 200);
 
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
@@ -51,13 +58,13 @@ try {
   await page.screenshot({ path: root + '/.local/qa/hisense-home.png' });
   // Wallpaper upload goes through the real decoder and produces every material.
   const image = readFileSync(root + '/app/assets/wallpapers/misty.jpg');
-  assert.equal((await fetch(base + '/api/wallpaper', { method: 'POST', headers: { 'X-CleanFrame-Key': key, 'Content-Type': 'image/jpeg' }, body: image })).status, 200);
+  assert.equal(await statusOf(fetch(base + '/api/wallpaper', { method: 'POST', headers: { 'X-CleanFrame-Key': key, 'Content-Type': 'image/jpeg' }, body: image })), 200);
   await page.reload();
   await page.waitForFunction(() => window.ShoreQA && ShoreQA.ready());
   await page.evaluate(() => ShoreQA.look({ wall: 'personal', layout: 'dock' }));
   await page.waitForFunction(() => ShoreQA.ready() && ShoreQA.state().wallpaper === 'personal');
-  for (const suffix of ['', '-thumb', '-panel']) assert.equal((await fetch(base + '/home/assets/wallpapers/personal' + suffix + '.jpg')).status, 200);
-  for (const suffix of ['field-blur', 'field-clear', 'field-frost', 'study-soft']) assert.equal((await fetch(base + '/home/assets/materials/personal-' + suffix + '.jpg')).status, 200);
+  for (const suffix of ['', '-thumb', '-panel']) assert.equal(await statusOf(fetch(base + '/home/assets/wallpapers/personal' + suffix + '.jpg')), 200);
+  for (const suffix of ['field-blur', 'field-clear', 'field-frost', 'study-soft']) assert.equal(await statusOf(fetch(base + '/home/assets/materials/personal-' + suffix + '.jpg')), 200);
   await page.screenshot({ path: root + '/.local/qa/hisense-personal-dock.png' });
 
   await page.route('**/api/config.js', async route => {
