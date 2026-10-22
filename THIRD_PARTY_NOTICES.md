@@ -28,7 +28,7 @@ The fifteen photo pages were individually checked on 20 October 2026. Each displ
 
 Photographers retain their rights. Wallpapers, thumbnails, panel backgrounds and material fields derive from the credited photographs and retain their terms. The Unsplash licence permits copying, modification and distribution subject to its restrictions, including on selling unmodified images and building a competing image service.
 
-## Development dependencies and exports
+## Dependencies and Docker images
 
 Development dependencies retain the licences in their npm packages. They are not copied into the TV JavaScript runtime.
 
@@ -51,3 +51,5 @@ They are distributed under the MIT licence; the complete notice is retained at
 `hisense/sidee/LICENSE`, with source details in `hisense/sidee/PROVENANCE.txt`.
 Pairing credentials and the runtime client certificate bundle are local
 configuration and are excluded from the repository and Docker build context.
+The setup guide retrieves the bundle separately from the pinned upstream source
+and verifies its checksum; it is not redistributed in this repository or image.

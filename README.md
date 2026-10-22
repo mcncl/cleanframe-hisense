@@ -6,7 +6,7 @@ A quiet home screen for Hisense VIDAA TVs: your apps, your photograph and your r
 
 Choose a list or dock, launch installed TV apps, and let the controls fade away to show your artwork. Optional Home return brings you back to CleanFrame when you press Home on the Hisense remote.
 
-CleanFrame runs as a TV app with a small service on an always-on home server. It keeps your TV's existing firmware and apps.
+CleanFrame runs as a TV app with a small service on an always-on home server. It keeps your TV's existing firmware and apps. This version requires **VIDAA**.
 
 ## Set it up with your AI agent
 
@@ -18,11 +18,12 @@ Give your agent this repository and paste the prompt below. Fill in what you kno
 Help me configure and install CleanFrame Hisense for my TV.
 Read AGENTS.md and docs/agent-tv-setup-guide.md first.
 
-TV model and firmware: [fill in, or help me find them]
+TV model, operating system and firmware: [fill in, or help me find them]
 Home server / NAS: [fill in]
 Apps I want on Home: [fill in]
 
-Check the tested-model notes and pairing prerequisites before starting.
+Confirm the TV runs VIDAA and check the tested-model notes first.
+Follow the setup guide, including preparing and verifying the pairing file.
 Ask for missing details and explain each step in plain language.
 Prepare the Docker service, guide me through TV pairing, and install
 the CleanFrame Home tile. Keep credentials and personal network
@@ -34,7 +35,7 @@ Preserve the TV's firmware and existing settings, and explain how
 to turn automatic Home return off.
 ```
 
-Initial pairing requires a locally supplied TV connection certificate. Your agent should check the [setup prerequisites](docs/agent-tv-setup-guide.md#prerequisites) first; this preparation is not automated yet.
+Your agent prepares the local connection file; you enter the PIN shown on the TV. The [setup guide](docs/agent-tv-setup-guide.md) includes the commands and checks. Apps and appearance are yours to choose—the demo shows one owner's setup.
 
 ## Tested TVs
 
