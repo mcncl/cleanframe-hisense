@@ -33,6 +33,15 @@ Photographers retain their rights. Wallpapers, thumbnails, panel backgrounds and
 Development dependencies retain the licences in their npm packages. They are not copied into the TV JavaScript runtime.
 
 The Docker image includes this notice, the root MIT licence and bundled public font licences. Preserve the included font and icon licence texts. Review [public release preparation](docs/public-release.md) before publishing a repository or download.
+
+## README comparison
+
+The animated comparison uses an owner-supplied photograph of VIDAA Home,
+corrected for daylight glare, and a rendered CleanFrame browser preview.
+Promotional artwork and service marks visible on the TV screen retain their
+respective owners' rights. The image sources, editing prompt and animation
+details are recorded in [the image notes](docs/images/README.md).
+
 ## Hisense adapter
 
 The Hisense service includes selected Python connection modules from
