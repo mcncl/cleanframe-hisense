@@ -490,7 +490,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(self.bridge.refresh())
             if path == "/api/runtime":
                 if self.client_address[0] == self.bridge.host or self.bridge.demo:
-                    self.bridge.runtime = {key: value[key] for key in ("ready", "width", "height", "engine", "errors", "location") if key in value}
+                    self.bridge.runtime = {key: value[key] for key in ("ready", "width", "height", "engine", "errors", "location", "preferences") if key in value}
                     self.bridge.runtime["observed_at"] = time.time()
                 return self.reply({"received": True})
             if path == "/api/install":

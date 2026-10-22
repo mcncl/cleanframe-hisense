@@ -4,8 +4,6 @@ A quiet home screen for Hisense VIDAA TVs: your apps, your photograph and your r
 
 ![VIDAA Home transitions to CleanFrame with Plex, SBS, ABC, IPTV Smarters and Stremio Lite](docs/images/vidaa-to-cleanframe.gif)
 
-*Glare-corrected VIDAA photo → CleanFrame browser preview. [Still preview](docs/images/cleanframe-five-apps.jpg).*
-
 Choose a list or dock, launch installed TV apps, and let the controls fade away to show your artwork. Optional Home return brings you back to CleanFrame when you press Home on the Hisense remote.
 
 CleanFrame runs as a TV app with a small service on an always-on home server. It keeps your TV's existing firmware and apps.

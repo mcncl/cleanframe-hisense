@@ -3,9 +3,12 @@
   'use strict';
   var config = window.CleanFramePlatform || {}, errors = [], tries = 0;
   function report() {
-    var xhr = new XMLHttpRequest(), qa = window.ShoreQA;
-    var value = { ready: !!(qa && qa.ready && qa.ready()), width: window.innerWidth, height: window.innerHeight,
+    var xhr = new XMLHttpRequest(), qa = window.ShoreQA, isReady = !!(qa && qa.ready && qa.ready());
+    var state = isReady && qa.state ? qa.state() : null;
+    var value = { ready: isReady, width: window.innerWidth, height: window.innerHeight,
       engine: navigator.userAgent, errors: errors, location: qa && qa.where ? qa.where() : null };
+    if (state) value.preferences = { look: state.look, dock: state.dock, appRecords: state.appRecords,
+      wallpaper: state.wallpaper, mode: state.mode, lastApp: state.lastApp };
     xhr.open('POST', '/api/runtime', true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('X-CleanFrame-Key', config.controlKey);

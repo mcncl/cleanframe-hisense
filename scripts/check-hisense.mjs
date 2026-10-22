@@ -50,8 +50,13 @@ try {
   const launches = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', request => { if (request.url().endsWith('/api/launch')) launches.push(request.postDataJSON()); });
+  const firstRuntime = page.waitForResponse(r => r.url().endsWith('/api/runtime') && r.ok());
   await page.goto(base + '/home/');
   await page.waitForFunction(() => window.ShoreQA && ShoreQA.ready());
+  await firstRuntime;
+  const reported = await (await fetch(base + '/api/status')).json();
+  assert.equal(reported.runtime.preferences.look.layout, 'dock');
+  assert.deepEqual(reported.runtime.preferences.dock, ['plex', 'sbs', 'abciview']);
   assert.deepEqual(await page.evaluate(() => ShoreQA.state().dock), ['plex', 'sbs', 'abciview']);
   await page.evaluate(() => ShoreQA.look({ layout: 'list', apps: 'text' }));
   await page.reload();

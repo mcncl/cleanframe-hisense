@@ -8,7 +8,7 @@ Use Node.js 22+ and Python 3.10+ for the static preview. The service is tested w
 - `app/platform.js`: browser-preview defaults. The server substitutes `/api/config.js` for live configuration.
 - `app/device.js`: ES5 XHR adapter for local app discovery and commands. Only the server holds TV pairing credentials.
 - `hisense/server.py`: HTTP routes, paired MQTT/TLS connection, real app/source discovery, wallpaper preparation and optional Home return.
-- `hisense/ambient.js` and `ambient.css`: idle fade and remote wake. `runtime.js` reports TV viewport/errors/focus to the local server.
+- `hisense/ambient.js` and `ambient.css`: idle fade and remote wake. `runtime.js` reports TV viewport/errors/focus and a snapshot of saved appearance and Home apps to the local server.
 - `hisense/sidee/`: pinned, unmodified connection code; preserve its licence and provenance.
 
 The stage is 1920 × 1080, uniformly scaled. Verify 1920 × 1080 and 1280 × 720. Keep TV JavaScript ES5-compatible; `node --check` alone does not enforce this. The observed reference TV uses Chromium 111 on VIDAA 9. A browser test does not establish another firmware's compatibility.
