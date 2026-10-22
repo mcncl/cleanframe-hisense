@@ -1,18 +1,14 @@
 {
-  "name": "cleanframe",
-  "version": "0.6.1",
+  "name": "cleanframe-hisense",
+  "version": "0.1.0",
   "private": true,
-  "description": "A personal, uncluttered home interface for Samsung The Frame.",
+  "description": "A quiet home screen for Hisense VIDAA TVs, hosted on your home server.",
   "scripts": {
-    "dev": "python3 scripts/preview.py",
-    "check": "node --check app/main.js && node --check app/device.js && python3 scripts/check.py",
-    "package": "python3 scripts/package.py",
-    "tv:info": "python3 scripts/tv.py info",
-    "tv:install": "python3 scripts/tv.py install",
-    "tv:launch": "python3 scripts/tv.py launch",
-    "check:browser": "node scripts/check-browser.mjs",
+    "dev": "python3 scripts/preview.py --public-fonts",
     "dev:public": "python3 scripts/preview.py --public-fonts",
-    "export:public": "python3 scripts/export-public.py",
+    "check": "node --check app/main.js && node --check app/platform.js && node --check app/device.js && node --check hisense/ambient.js && node --check hisense/runtime.js && python3 scripts/check.py",
+    "check:browser": "node scripts/check-browser.mjs",
+    "check:hisense": "node scripts/check-hisense.mjs",
     "check:public": "python3 scripts/check-public.py"
   },
   "devDependencies": {

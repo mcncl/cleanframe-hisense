@@ -1,0 +1,4 @@
+Source: https://github.com/Empi9245/Sidee
+Commit: 36095890dbf27e3daf1cf9c461bc62f8e7cad175
+Files: core/{__init__,client,protocol,platform_support}.py, unmodified.
+License: MIT (see LICENSE). Runtime certificate bundle is private configuration.

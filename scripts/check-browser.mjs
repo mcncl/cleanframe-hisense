@@ -1,28 +1,25 @@
-// Production UI checks. Mock only the public Tizen boundary; never contact a TV.
+// Production UI checks. Mock only the local HTTP bridge; never contact a TV.
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { openPreview, root } from './browser.mjs';
 
 const KEY = 'cleanframe.home.v1';
 const PRIMARY = ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'];
-const IDS = ['IkWsFHtOY9.Stremio', 'org.tizen.netflix-app', 'MCmYXNxgcu.DisneyPlus', '9Ur5IzDKqV.TizenYouTube', 'com.samsung.tv.aria-video', 'org.tizen.primevideo', 'mWK87Xghap.ABCiview', 'OyE7OuxlUi.SBSOnDemand', 'org.tizen.apple.apple-music'];
+const IDS = PRIMARY.map(id => 'service.' + id);
 const NAMES = ['Stremio', 'Netflix', 'Disney+', 'YouTube', 'Apple TV', 'Prime Video', 'ABC iview', 'SBS On Demand', 'Apple Music'];
-const EXTRA = 'AbCdEf1234.FamilyApp', SPOTIFY = 'rJeHak5zRg.Spotify';
+const EXTRA = 'native.family', SPOTIFY = 'native.spotify';
 const UNSAFE_NAME = 'Family <img src=x onerror="window.__catalogXss=1"> & TV';
 const CATALOG = IDS.map((id, i) => ({ id, name: NAMES[i], show: true, iconPath: '' })).concat([
   { id: EXTRA, name: UNSAFE_NAME, show: true, iconPath: '' },
   { id: SPOTIFY, name: 'Spotify', show: true, iconPath: '' },
-  { id: '5b8c3eb16b.BeamCTVDev', name: 'HBO Max', show: true, iconPath: '' },
-  { id: 'nClrkHome1.FrameHome', name: 'CleanFrame', show: true },
-  { id: 'AbCdEf1234.worker', name: 'Background worker', show: true },
-  { id: 'com.samsung.tv.cobalt-yt', name: 'YouTube', show: true }
+  { id: 'native.hbomax', name: 'HBO Max', show: true, iconPath: '' }
 ]);
 const walls = JSON.parse(readFileSync(root + 'app/assets/wallpapers/SOURCES.json', 'utf8'));
 const out = root + '.local/qa/';
 mkdirSync(out, { recursive: true });
-const sourceFiles = ['app/main.js', 'app/device.js', 'app/index.html', 'app/style.css', 'app/config.xml', 'app/assets/wallpapers/SOURCES.json', 'app/assets/wallpapers/catalog.js', 'app/assets/adaptive-ink.js', 'app/assets/icons/metrics.js'];
+const sourceFiles = ['app/main.js', 'app/device.js', 'app/index.html', 'app/style.css', 'app/platform.js', 'app/assets/wallpapers/SOURCES.json', 'app/assets/wallpapers/catalog.js', 'app/assets/adaptive-ink.js', 'app/assets/icons/metrics.js'];
 const hashes = () => Object.fromEntries(sourceFiles.map(f => [f, createHash('sha256').update(readFileSync(root + f)).digest('hex')]));
-const report = { scope: 'Production UI in Chromium; mock public Tizen API only; no TV contacted.', sourceBefore: hashes(), checks: [], failures: [], pageErrors: [], expectedNetworkFailures: [] };
+const report = { scope: 'Production UI in Chromium; mock local HTTP responses only; no TV contacted.', sourceBefore: hashes(), checks: [], failures: [], pageErrors: [], expectedNetworkFailures: [] };
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const baseline = (patch = {}) => ({ dock: PRIMARY.slice(), wallpaper: walls[0].id, mode: 'fixed', lastApp: 'netflix', theme: 'shore', ...patch });
 let preview, current, section = '';
@@ -41,7 +38,7 @@ async function run(name, fn) {
 }
 async function closePage() { if (current) { current.__closing = true; await current.close(); current = null; } }
 
-// Production still calls its unmodified device.js adapter.
+// Production device.js runs unchanged; isolate its HTTP transport only.
 function installHarness({ seed, legacy, mock, catalog, minuteMs, catalogFailure, noFontAPI, storageFailure }) {
   if (!sessionStorage.getItem('__cleanframe_seeded')) {
     if (seed !== undefined) localStorage.setItem('cleanframe.home.v1', typeof seed === 'string' ? seed : JSON.stringify(seed));
@@ -63,27 +60,37 @@ function installHarness({ seed, legacy, mock, catalog, minuteMs, catalogFailure,
     document.dispatchEvent(new Event('visibilitychange'));
   };
   if (noFontAPI) Object.defineProperty(document, 'fonts', { configurable: true, value: undefined });
+  window.CleanFramePlatform = {
+    name: 'Hisense', homeName: 'VIDAA Home', controlKey: mock ? 'isolated-test-key' : '',
+    apps: catalog.slice(0, 9).map(a => ({ id: a.id.slice(8), appId: a.id, name: a.name, mark: true }))
+  };
   if (!mock) return;
   window.__tv = { catalog, catalogFailure: !!catalogFailure, launchFailure: false, holdCatalog: false, pending: [], calls: [], catalogCalls: 0 };
-  window.tizen = {
-    ApplicationControlData: function (key, value) { this.key = key; this.value = value; },
-    ApplicationControl: function (operation, uri, mime, category, data) { Object.assign(this, { operation, uri, mime, category, data }); },
-    application: {
-      getAppsInfo(ok, fail) {
-        const tv = window.__tv;
+  window.XMLHttpRequest = function () {
+    const xhr = this;
+    xhr.open = (method, path) => { xhr.path = path; };
+    xhr.setRequestHeader = () => {};
+    xhr.send = body => {
+      const tv = window.__tv;
+      const complete = (status, value) => {
+        xhr.status = status; xhr.responseText = JSON.stringify(value);
+        setTimeout(() => xhr.onload(), 0);
+      };
+      if (xhr.path === '/api/apps') {
         tv.catalogCalls++;
-        const finish = () => tv.catalogFailure ? fail({ name: 'UnknownError', message: 'Catalogue unavailable for QA' }) : ok(tv.catalog.map(a => ({ ...a })));
-        if (tv.holdCatalog) tv.pending.push({ ok, fail }); else setTimeout(finish, 0);
-      },
-      launch(id, ok, fail) {
-        const tv = window.__tv; tv.calls.push({ method: 'launch', id });
-        setTimeout(() => tv.launchFailure ? fail({ name: 'NotFoundError', message: 'App unavailable for QA' }) : ok(), 0);
-      },
-      launchAppControl(control, id, ok, fail) {
-        const tv = window.__tv; tv.calls.push({ method: 'launchAppControl', id, control });
-        setTimeout(() => tv.launchFailure ? fail({ name: 'UnknownError', message: 'Screen unavailable for QA' }) : ok(), 0);
+        const ok = list => complete(200, { apps: list.map(a => ({
+          appId: a.id, name: a.name, icon: a.iconPath || '',
+          brand: a.id === 'native.spotify' ? 'spotify' : a.id.startsWith('service.') ? a.id.slice(8) : ''
+        })) });
+        const fail = () => complete(503, { error: 'Catalogue unavailable for QA' });
+        if (tv.holdCatalog) tv.pending.push({ ok, fail });
+        else if (tv.catalogFailure) fail(); else ok(tv.catalog);
+      } else {
+        const id = JSON.parse(body).id;
+        tv.calls.push({ method: 'launch', id });
+        complete(tv.launchFailure ? 503 : 200, tv.launchFailure ? { error: 'The TV could not open this screen. Try again.' } : { sent: true });
       }
-    }
+    };
   };
 }
 async function page(options = {}) {
@@ -237,7 +244,7 @@ try {
   await run('Real catalogue and native launch boundary', async () => {
     await page(); await library();
     const names = await current.locator('[data-action^="apps.open."] .label').allTextContents();
-    check('Consumer catalogue excludes services, self and duplicate YouTube', names.length === 12 && names.filter(n => n === 'YouTube').length === 1 && !names.includes('CleanFrame') && !names.includes('Background worker'), names);
+    check('Bridge catalogue renders each returned app once', names.length === 12 && names.filter(n => n === 'YouTube').length === 1 && !names.includes('CleanFrame') && !names.includes('Background worker'), names);
     check('Installed names stay text, including HTML punctuation', names.includes(UNSAFE_NAME) && !(await current.evaluate(() => window.__catalogXss)));
     check('Exploration fixtures do not appear', !names.includes('Plex') && !names.includes('Jellyfin'));
     await act('apps.open.' + SPOTIFY); await current.waitForFunction(() => __tv.calls.length > 0);
@@ -248,13 +255,13 @@ try {
     await current.evaluate(() => window.dispatchEvent(new Event('focus')));
     await act('util.art'); await current.waitForFunction(() => __tv.calls.length === 3);
     const art = await current.evaluate(() => __tv.calls.at(-1));
-    check('Art Mode uses app-control with fullscreen request', art.method === 'launchAppControl' && art.id === 'org.tizen.art-app' && art.control.data.some(d => d.key === 'mode' && d.value[0] === 'fullscreen'), art);
-    await current.evaluate(() => window.dispatchEvent(new Event('focus'))); await group('samsung'); await act('samsung.home');
+    check('Art Mode requests the native Art Gallery control', art.id === 'control.art', art);
+    await current.evaluate(() => window.dispatchEvent(new Event('focus'))); await group('tv'); await act('tv.home');
     await current.waitForFunction(() => __tv.calls.length === 4);
-    check('Samsung escape keeps CSFS target', (await current.evaluate(() => __tv.calls.at(-1))).id === 'com.samsung.tv.csfs');
-    await current.evaluate(() => window.dispatchEvent(new Event('focus'))); await group('samsung'); await act('samsung.settings');
+    check('VIDAA escape requests original Home', (await current.evaluate(() => __tv.calls.at(-1))).id === 'control.home');
+    await current.evaluate(() => window.dispatchEvent(new Event('focus'))); await group('tv'); await act('tv.settings');
     await current.waitForFunction(() => __tv.calls.length === 5);
-    check('TV settings keeps installed target', (await current.evaluate(() => __tv.calls.at(-1))).id === 'com.samsung.tv.coba.setting');
+    check('TV settings requests native menu', (await current.evaluate(() => __tv.calls.at(-1))).id === 'control.settings');
     await current.evaluate(() => { window.dispatchEvent(new Event('focus')); __tv.launchFailure = true; });
     await scene('home'); await act('home.app.netflix'); await current.waitForFunction(() => ShoreQA.where().view === 'message');
     check('Launch failure is shown', /could not|unavailable|try again/i.test(await current.locator('#stage').innerText()));
@@ -295,7 +302,7 @@ try {
     await page(); await editor();
     const start = (await state()).dock;
     await remove('netflix');
-    check('Remove persists membership and keeps installation', !(await stored()).dock.includes('netflix') && (await current.evaluate(() => __tv.catalog.some(a => a.id === 'org.tizen.netflix-app'))));
+    check('Remove persists membership and keeps installation', !(await stored()).dock.includes('netflix') && (await current.evaluate(() => __tv.catalog.some(a => a.id === 'service.netflix'))));
     check('Focus follows removal into addable apps', (await state()).focusAction === 'editor.add.netflix', (await state()).focusAction);
     await nav('ok'); check('Second OK restores same position', same((await stored()).dock, start));
     await remove('netflix'); await act('editor.undo'); check('Undo persists previous membership', same((await stored()).dock, start));
@@ -361,7 +368,7 @@ try {
   });
   await run('Settings overview and visible choices', async () => {
     await page(); await scene('settings');
-    const expected = ['settings.group.background', 'settings.group.layout', 'settings.group.typography', 'settings.group.focus', 'settings.editor', 'settings.group.samsung'];
+    const expected = ['settings.group.background', 'settings.group.layout', 'settings.group.typography', 'settings.group.focus', 'settings.editor', 'settings.group.tv'];
     check('Overview has all six settings groups', same((await call('actions')).filter(a => expected.includes(a)).sort(), expected.slice().sort()));
     const specs = {
       background: { bg: ['dark', 'light', 'photo'] },
@@ -389,13 +396,13 @@ try {
     check('All five rotation modes are visible together', same(rotationRows.map(r => r.action).sort(), ['fixed', 'open', '5', '15', '60'].map(v => 'rotation.' + v).sort()), rotationRows);
     await nav('back');
     check('Rotation Back restores its Background row', (await state()).settingsGroup === 'background' && (await state()).focusAction === 'background.rotation', await call('where'));
-    await group('samsung');
-    const samsungActions = await call('actions');
-    check('Samsung group shows both native actions', samsungActions.includes('samsung.home') && samsungActions.includes('samsung.settings'));
+    await group('tv');
+    const tvActions = await call('actions');
+    check('Hisense group shows both native actions', tvActions.includes('tv.home') && tvActions.includes('tv.settings'));
   });
   await run('Settings focus never changes the applied Home', async () => {
     await page();
-    for (const name of ['background', 'layout', 'typography', 'focus', 'samsung']) {
+    for (const name of ['background', 'layout', 'typography', 'focus', 'tv']) {
       await group(name); const before = await settingsSnapshot();
       const visited = new Set();
       for (const direction of ['right', 'right', 'down', 'left', 'left', 'down', 'right', 'right', 'down', 'left', 'up', 'up', 'up', 'right']) {
@@ -413,7 +420,7 @@ try {
       await nav('back');
       check(name + ' Back cancels the unconfirmed choice', same(await settingsSnapshot(), before) && (await state()).focusAction === 'settings.group.' + name);
     }
-    check('Browsing Samsung does not launch a native app', (await current.evaluate(() => __tv.calls.length)) === 0);
+    check('Browsing Hisense does not launch a native app', (await current.evaluate(() => __tv.calls.length)) === 0);
     await group('background'); await act('background.rotation'); const before = await settingsSnapshot();
     await nav('down', 'down', 'up', 'right', 'left');
     check('Rotation arrows do not save a mode', same(await settingsSnapshot(), before));
@@ -580,7 +587,7 @@ try {
     for (const width of [1920, 1280]) {
       await current.setViewportSize({ width, height: width * 9 / 16 });
       await current.waitForFunction(w => Math.abs(document.getElementById('stage').getBoundingClientRect().width - w) < 1, width);
-      for (const name of ['background', 'layout', 'typography', 'focus', 'samsung', 'rotation']) {
+      for (const name of ['background', 'layout', 'typography', 'focus', 'tv', 'rotation']) {
         await group(name === 'rotation' ? 'background' : name);
         if (name === 'rotation') await act('background.rotation');
         const geometry = await current.evaluate(() => {

@@ -1,4 +1,4 @@
-"""Serve the actual TV UI and the retained design gallery on this Mac."""
+"""Serve the TV UI and offline material-builder inputs on loopback."""
 import argparse
 import io
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer

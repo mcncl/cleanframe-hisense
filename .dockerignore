@@ -1,0 +1,13 @@
+.git
+.local
+node_modules
+dist
+__pycache__
+*.pyc
+.env*
+**/session.json
+**/certs.bin.k
+**/control-key
+**/*.pem
+**/*.key
+**/*.p12

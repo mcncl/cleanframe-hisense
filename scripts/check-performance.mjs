@@ -17,7 +17,7 @@ const report = {
   sourceBefore: hashes(), checks: [], warnings: [], failures: [], scenarios: [], errors: [],
   budgets: { keyP95Ms: 50, keyMaximumMs: 120, frameMaximumMs: 250, appearanceMaximumMs: 4000 },
   notes: [
-    'A 4× Chromium slowdown is a reproducible regression screen, not an emulation of the Samsung processor, GPU, decoder, memory limit or browser engine.',
+    'A 4× Chromium slowdown is a reproducible regression screen, not an emulation of the Hisense processor, GPU, decoder, memory limit or browser engine.',
     'Key work measures the complete production navigation handler, including render calls. Frame gaps include paint/compositing scheduling.',
     'DOM and post-GC JavaScript heap checks detect retained growth, not GPU texture allocation or total TV process memory.',
     'The localhost preview sends no-store; repeated asset transfers are reported separately from decoded-image or DOM retention.'
@@ -84,17 +84,18 @@ try {
   page.on('response', response => { if (response.status() >= 400) report.errors.push(response.status() + ' ' + response.url()); });
   page.on('requestfailed', request => { if (!page.__closing && request.failure()?.errorText !== 'net::ERR_ABORTED') report.errors.push(request.failure()?.errorText + ' ' + request.url()); });
   await page.addInitScript(() => {
-    const primary = [
-      ['IkWsFHtOY9.Stremio', 'Stremio'], ['org.tizen.netflix-app', 'Netflix'], ['MCmYXNxgcu.DisneyPlus', 'Disney+'],
-      ['9Ur5IzDKqV.TizenYouTube', 'YouTube'], ['com.samsung.tv.aria-video', 'Apple TV'], ['org.tizen.primevideo', 'Prime Video'],
-      ['mWK87Xghap.ABCiview', 'ABC iview'], ['OyE7OuxlUi.SBSOnDemand', 'SBS On Demand'], ['org.tizen.apple.apple-music', 'Apple Music']
-    ];
-    const catalogue = primary.map(([id, name]) => ({ id, name, show: true, iconPath: '' }));
-    for (let i = 0; i < 14; i++) catalogue.push({ id: 'Qa12345678.Stream' + i, name: 'Streaming app ' + String(i + 1).padStart(2, '0'), show: true, iconPath: '' });
-    window.tizen = { application: {
-      getAppsInfo(ok) { setTimeout(() => ok(catalogue), 0); },
-      launch(id, ok) { setTimeout(ok, 0); }
-    } };
+    const names = ['Stremio', 'Netflix', 'Disney+', 'YouTube', 'Apple TV', 'Prime Video', 'ABC iview', 'SBS On Demand', 'Apple Music'];
+    const ids = ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'];
+    const apps = ids.map((id, i) => ({ id, appId: 'service.' + id, name: names[i], mark: true }));
+    const catalogue = apps.map(a => ({ appId: a.appId, name: a.name, brand: a.id, icon: '' }));
+    for (let i = 0; i < 14; i++) catalogue.push({ appId: 'native.stream' + i, name: 'Streaming app ' + String(i + 1).padStart(2, '0'), icon: '' });
+    window.CleanFramePlatform = { name: 'Hisense', homeName: 'VIDAA Home', controlKey: 'isolated-test-key', apps };
+    window.XMLHttpRequest = function () {
+      const xhr = this;
+      xhr.open = (method, path) => { xhr.path = path; };
+      xhr.setRequestHeader = () => {};
+      xhr.send = () => { xhr.status = 200; xhr.responseText = JSON.stringify(xhr.path === '/api/apps' ? { apps: catalogue } : { sent: true }); setTimeout(() => xhr.onload(), 0); };
+    };
     localStorage.setItem('cleanframe.home.v1', JSON.stringify({ dock: ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'], wallpaper: 'misty', mode: 'fixed', theme: 'shore', lastApp: 'netflix' }));
   });
   cdp = await page.context().newCDPSession(page);

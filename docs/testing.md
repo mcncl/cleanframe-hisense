@@ -1,35 +1,25 @@
 # Validation
 
-## Offline app changes
+All automated checks below are isolated from the TV.
 
 ```sh
 npm ci
 npm run check
 npx playwright install chromium
-npm run check:browser
+CLEANFRAME_PUBLIC_FONTS=1 npm run check:browser
+python3.12 -m venv .local/venv
+.local/venv/bin/pip install -r hisense/requirements.txt
+npm run check:hisense
+.local/venv/bin/python -m unittest discover -s hisense -p 'test_*.py' -v
+npm run check:public
 ```
 
-`check` validates JavaScript syntax, package identity/version and bundled resources. It does not contact a TV. `check:browser` uses a fresh Playwright Chromium profile and its own loopback preview. It checks List and Dock navigation, single focus, Home controls, grouped Settings, explicit OK application, applied checkmarks, pending-load cancellation, retries, persistence, all fifteen wallpaper bundles, available fonts, 720p scaling, migrations, the Home editor and honest browser-only launch errors. Reports and screenshots are in ignored `.local/qa/`. A failed assertion exits with a nonzero status.
+`check` validates JavaScript syntax and bundled HTML/CSS/catalogue resources. `check:browser` exercises the actual UI and HTTP adapter with isolated mocked transport: migrations, both layouts, focus, settings, failure recovery, app editing, fonts, all wallpaper bundles and 720p scaling. Nine-app fixtures deliberately exercise the maximum; live defaults remain Plex, SBS and ABC. Reports and screenshots go to ignored `.local/qa/`.
 
-For public-source validation, set `CLEANFRAME_PUBLIC_FONTS=1` when running `check:browser`; the preview helper then excludes the local proprietary overlay. Run `npm run check:public` for the bounded source/history checks and `npm run export:public` for a widget that always excludes private fonts. The GitHub Actions workflow uses this public path. Browser/package checks do not clear third-party asset rights or validate TV behaviour.
+`check:hisense` runs the real Python service in demo mode with a temporary state directory, then checks routes, request protection, shortcuts, honest Fire TV fallback, preference persistence, generated photo materials, idle fade and held-key wake. It uses `.local/venv/bin/python` by default; set `CLEANFRAME_PYTHON` to another Python with the required dependencies.
 
-If the default browser/cache location is unavailable, use a writable local path for both commands:
+Home-return unit tests cover pauses, cooldown retries without another broadcast, worker timeouts, native launches clearing pauses, latest-state precedence and leaving Art/input/standby states alone. `check:public` checks candidate source and reachable Git paths for private state, known credential formats and unexpected font files. It is a bounded check, not a complete secret audit.
 
-```sh
-PLAYWRIGHT_BROWSERS_PATH="$PWD/.local/playwright" npx playwright install chromium
-PLAYWRIGHT_BROWSERS_PATH="$PWD/.local/playwright" npm run check:browser
-```
+Manual browser review should include List/Dock, Photo/Light/Dark, one and nine apps, explicit OK selection, Back cancellation and single visible focus. The optional `node scripts/check-performance.mjs` audit is a Chromium comparison, not a TV benchmark.
 
-For manual review, use `npm run dev` and open `/home/`. Use the arrow keys, Enter and Escape. Check the changed flow in List and Dock, on Photo, Light and Dark backgrounds. Check a single app and all nine apps when changing app layout. In Settings, browse without applying, apply with OK, return with both Back routes, and cancel a pending resource load. Check editor placement/undo, wallpaper rotation pausing during panels/background time, and restored focus on return when those flows change. Browser preferences are separate from TV preferences.
-
-## Physical TV checks
-
-Run these only under a task that includes TV testing. Announce any installation or launch first, then follow `development.md`. SDK success alone is not a visible result. Ask Nathan to confirm the normal remote behaviour and record the version, firmware, result and any open checks in `tv-status.md`.
-
-1. Move in both directions through each layout and Settings; check focus, response and readable labels from the sofa.
-2. Launch Netflix/YouTube, press Home to return, and check the selected app. Treat streaming apps' own Back handling separately.
-3. Check Art Mode, Other apps, TV settings and Settings → Samsung → Samsung Home; verify the actual visible destinations.
-4. Check saved appearance/app order/wallpaper after relaunch. Check timed rotation pauses while a panel is open or the app is hidden.
-5. Test normal power-on after a streaming app and the usual Art Mode routine only when that work is included. Preserve the native Home recovery baseline and restore it before any uninstall/identity change.
-
-The current pending results are listed at the top of `tv-status.md`. Browser CPU throttling is a development comparison, not a TV performance measurement.
+Device checks require an owner-authorised task. Announce installations, launches and restarts. Confirm real app destinations, Home from Plex (including rapid repeat), saved appearance and uploaded artwork, idle/wake, Art Gallery, normal power-on and restart persistence. Keep observed results separate from API success; see [TV evidence](tv-status.md).

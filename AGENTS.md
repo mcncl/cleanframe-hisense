@@ -1,15 +1,13 @@
-# CleanFrame
+# CleanFrame Hisense
 
-`app/` is the current packaged UI. Read `docs/development.md` and `docs/interaction-behaviour.md` before app changes. For a new contributor or a separate TV installation, also read `docs/for-agents.md`.
+Read `docs/development.md` and `docs/interaction-behaviour.md` before app changes. Read `docs/for-agents.md` before device work and `docs/assets.md` before changing image materials or icon geometry.
 
-Use simple HTML, CSS and ES5-compatible JavaScript for the TV. Node tooling can use modern JavaScript. Preserve remote focus/navigation, preference migrations and cached rendering. Read `docs/assets.md` before changing images, glass geometry or icon sizing; keep live blur and pixel analysis off the TV animation path.
+Use ES5-compatible JavaScript in `app/` and the TV-facing files in `hisense/`. Node tools can use modern JavaScript. Preserve remote focus/navigation, localStorage preference migrations and precomputed material rendering. Keep device commands in `hisense/server.py` and the HTTP adapter in `app/device.js`.
 
-Run `npm run check` for app changes. For interaction changes, run the browser preview and `CLEANFRAME_PUBLIC_FONTS=1 npm run check:browser`; public contributors must not need proprietary fonts. Run `npm run check:public` and `npm run export:public` before preparing a public download. Follow `CONTRIBUTING.md` and retain third-party notices.
+Run `npm run check`; for UI changes also run `CLEANFRAME_PUBLIC_FONTS=1 npm run check:browser`. Run `npm run check:hisense` for server/adapter/idle changes and `.local/venv/bin/python -m unittest discover -s hisense -p 'test_*.py'` for Home-return changes. Tests must use isolated demo state and never contact a TV. Run `npm run check:public` before sharing source. Follow `CONTRIBUTING.md` and retain upstream copyright, licences and asset records.
 
-Browser/repository tasks do not authorise device access. Read `docs/tv-status.md` before compatibility claims and `docs/agent-tv-setup-guide.md` before a new TV setup. An explicit device task is required even for queries that stage a helper. Announce any installation, app launch or restart; confirm visible results with the owner. Treat native Home/startup writes as a separate task with explicit authority and an exact-value recovery baseline.
+Browser or repository work does not authorise TV access. Device tasks need the owner's instruction; announce installations, launches and restarts. Preserve the existing `cleanframehome` tile identity and server URL for upgrades. Confirm physical results with the owner; a sent request is not proof of a visible destination. Do not flash firmware or change native startup settings as part of launcher setup.
 
-On the maintainer's TV, preserve the stable package/application identity, author certificate and existing native Home assignment. For an independent user's installation, generate their own identity and certificates, and update manifest checks, launch/self-filter IDs and helper targets consistently. `scripts/package.py`, `scripts/tv.py` and `scripts/native-home/` contain reference-machine assumptions; they are not an unattended installer.
+Keep pairing tokens, certificate bundles, control keys, personal photos, device identifiers, addresses and SSH details in ignored `.local/` or private deployment state. Do not put them in source, images, Docker layers, logs or issues. Public fonts must work without proprietary files. See `THIRD_PARTY_NOTICES.md`.
 
-Keep proprietary fonts, signing keys, passwords, device identifiers, addresses, SDKs, recovery values and generated packages in ignored `.local/` or `dist/`. Never commit paid font binaries or publish a private-font widget. Public-code licensing does not replace the terms in `THIRD_PARTY_NOTICES.md`.
-
-On Nathan's Mac, use `/Users/nathan/.local/bin/gh-for-repo` for GitHub CLI work. On another machine, use the contributor's own authenticated GitHub account. Preserve shared or uncommitted work. Use reversible deletion; never reset, force-push or rewrite history without explicit authority. Publication/visibility changes require a separate instruction.
+Preserve shared and uncommitted work. Use reversible deletion; do not reset, force-push or rewrite history without explicit authority. Use the contributor's own authenticated GitHub account. Publication and visibility changes require the owner's instruction.

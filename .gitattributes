@@ -1,0 +1,2 @@
+# Preserve the vendored Sidee files exactly, including upstream CRLF endings.
+hisense/sidee/* -text whitespace=cr-at-eol

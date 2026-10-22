@@ -1,0 +1,3 @@
+#ambientPhoto{position:fixed;inset:0;background-position:center;background-size:cover;opacity:0;pointer-events:none;transition:opacity 1200ms ease;z-index:20}
+body.ambient #ambientPhoto{opacity:1}
+@media(prefers-reduced-motion:reduce){#ambientPhoto{transition:none}}

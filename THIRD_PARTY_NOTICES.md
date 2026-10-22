@@ -1,6 +1,6 @@
 # Third-party notices
 
-The root MIT licence covers CleanFrame's original code and documentation. Third-party material retains the terms below. Keep these notices and the adjacent licence texts when sharing source or a build.
+The root MIT licence retains Nathan Clark's original CleanFrame copyright and covers the Hisense adaptation's code and documentation. Third-party material retains the terms below. Keep these notices and the adjacent licence texts when sharing source or a build.
 
 ## Fonts
 
@@ -10,7 +10,7 @@ The root MIT licence covers CleanFrame's original code and documentation. Third-
 | Geist and Newsreader | SIL Open Font License 1.1; licences beside the files in `app/assets/fonts/`, with exact sources and hashes in `app/assets/fonts/SOURCES.json` |
 | Optional PP Neue Montreal, PP Mori and PP Pangram Sans | Proprietary. Binaries stay in ignored `.local/` storage and are excluded from Git and public exports. The optional local overlay requires the user's own permission to use and embed those files. |
 
-The public app uses Manrope, Geist and Newsreader. A personal widget containing proprietary fonts must stay private. See [Pangram's licensing information](https://pangrampangram.com/pages/eula).
+The public app uses Manrope, Geist and Newsreader. Proprietary fonts are never included in the Docker runtime. See [Pangram's licensing information](https://pangrampangram.com/pages/eula).
 
 ## Icons and trademarks
 
@@ -32,4 +32,13 @@ Photographers retain their rights. Wallpapers, thumbnails, panel backgrounds and
 
 Development dependencies retain the licences in their npm packages. They are not copied into the TV JavaScript runtime.
 
-`npm run export:public` excludes private fonts and includes this notice and the root MIT licence. Preserve the included font and icon licence texts. Review [public release preparation](docs/public-release.md) before publishing a repository or download.
+The Docker image includes this notice, the root MIT licence and bundled public font licences. Preserve the included font and icon licence texts. Review [public release preparation](docs/public-release.md) before publishing a repository or download.
+## Hisense adapter
+
+The Hisense service includes selected Python connection modules from
+[Sidee](https://github.com/Empi9245/Sidee), commit
+`36095890dbf27e3daf1cf9c461bc62f8e7cad175`, copyright 2026 Sidee contributors.
+They are distributed under the MIT licence; the complete notice is retained at
+`hisense/sidee/LICENSE`, with source details in `hisense/sidee/PROVENANCE.txt`.
+Pairing credentials and the runtime client certificate bundle are local
+configuration and are excluded from the repository and Docker build context.

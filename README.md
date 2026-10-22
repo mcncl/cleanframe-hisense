@@ -1,101 +1,65 @@
-# CleanFrame
+# CleanFrame Hisense
 
-A quieter home screen for Samsung The Frame. Your apps, a photograph and the time, with an interface made for the TV remote.
+A quiet home screen for Hisense VIDAA TVs: your apps, a photograph and the time, controlled with the TV remote.
 
-![CleanFrame browser preview using the bundled Manrope font](docs/images/cleanframe-dock.jpg)
+This is an independent adaptation of [CleanFrame by Nathan Clark](https://github.com/nthnclrk/CleanFrame). Its interface, remote navigation, wallpapers and rendering approach come from that project. This repository maintains the Hisense implementation, with a Docker service and local TV controls in place of the original Samsung integration.
 
-I built CleanFrame for one TV: my own Samsung The Frame, running Tizen. I'm sharing the code and setup notes as a starting point for other people to build on.
+![Hisense browser preview with Plex, SBS On Demand and ABC iview](docs/images/cleanframe-hisense.jpg)
 
-**Use it at your own risk.** Most of the work has gone into making it work well on my TV. Very little has gone into making it portable. The setup scripts reflect my computer, TV and firmware, so expect to adapt them and test the result on your own hardware.
+## What it does
 
-I highly recommend forking it and building on top of it, ideally with a coding agent that can help you understand and adapt the setup. Start with the browser preview, make the interface your own, then work through TV installation when you're ready. Native Home/startup changes need particular care; the setup guide covers the risks and recovery steps.
+- List and Dock layouts, app selection and ordering, wallpaper rotation and saved appearance settings.
+- Launch installed VIDAA apps and switch HDMI inputs using the TV's PIN-paired local connection.
+- Upload your own photograph and fade the interface after an idle interval; the first remote press brings the controls back.
+- Optionally return to CleanFrame when the Hisense remote opens VIDAA Home.
+- Open the TV's existing Art Gallery and settings.
 
-## Try the interface
+The interface runs as a TV web-app tile. An always-on home server hosts it and handles TV commands. This is a launcher, not replacement firmware: the TV keeps its operating system and native apps. VIDAA does not become Android, and Fire TV APKs cannot be installed through this project. A Fire TV shortcut can switch to the stick's HDMI input.
 
-You need Node.js 22+ and Python 3.10+ to run the browser preview.
+## Compatibility
+
+The reference installation is a **Hisense 55S7NAU CanvasTV**, firmware **V0000.09.60X.Q0609**, VIDAA 9, with an Ubuntu Server Docker host. The owner has confirmed the tile, remote navigation, Plex, SBS and ABC launching, appearance settings, and repeated Home return from Plex.
+
+Other VIDAA models and firmware remain unverified. Normal power-on, persistence after a TV restart, native Art Gallery behaviour and physical idle/wake behaviour still need testing. See [device evidence](docs/tv-status.md).
+
+## Preview without a TV
+
+Install Node.js 22+ and Python 3.10+, then:
 
 ```sh
-git clone https://github.com/nthnclrk/CleanFrame.git
-cd CleanFrame
+git clone https://github.com/mcncl/cleanframe-hisense.git
+cd cleanframe-hisense
 npm ci
-npm run dev:public
+npm run dev
 ```
 
-Open [localhost:4795/home/](http://localhost:4795/home/). Use the arrow keys, Enter and Escape, or click the controls. App launches and Samsung screens require a TV; the preview reports that limitation when you select them.
+Open [localhost:4795/home/](http://localhost:4795/home/). Use arrows, Enter and Escape. The preview uses bundled fonts and reports that TV commands require a real installation.
 
-The public preview uses the included Manrope, Geist and Newsreader fonts.
+## Install on a home server
 
-## What you can change
+Follow the [Hisense setup guide](docs/agent-tv-setup-guide.md). You need Docker Compose, a reachable VIDAA TV, and a locally supplied Sidee-compatible TV client certificate bundle. The bundle and pairing credentials are deliberately excluded from this repository and image. Fresh installation is not yet a one-command process.
 
-- Choose a List or Dock layout, with icons, names or both.
-- Use a photograph, light or dark background, with a simple 12-hour clock.
-- Adjust typography, focus and glass materials through the same Settings interface.
-- Choose and reorder Home apps; discover installed apps on the TV.
-- Select from fifteen wallpapers and save your preferences locally.
+After pairing, the service hosts the TV interface at `/home/` and management at `/`. Default shortcuts are Plex, SBS On Demand and ABC iview; install them through the VIDAA App Store. Other installed apps and HDMI inputs can be pinned from All apps.
 
-The glass and blur are rendered ahead of time. The TV loads the finished images and uses transforms and opacity for focus feedback.
+Automatic Home return is optional and initially disabled. It observes VIDAA Home and opens CleanFrame after a short delay. A glimpse of VIDAA may appear. Turn it off in management or stop the container to return to ordinary TV behaviour. The server must stay running.
 
-## Use a coding agent
-
-Open this repo in a local coding agent and give it a bounded change:
-
-```text
-Read AGENTS.md, docs/development.md and docs/interaction-behaviour.md.
-Help me adapt CleanFrame. Start with the public-font browser preview.
-My first change is: <describe one change>.
-Preserve remote navigation, saved preferences and the ES5 runtime.
-Run the source checks and relevant browser checks. Show the result.
-This task is browser-only: do not connect to a TV, sign or install a
-package, or change Home/startup settings.
-```
-
-See [working with an agent](docs/for-agents.md) for the TV setup prompt and the distinction between UI work, app installation and native Home changes. An agent needs local computer access for TV work; a hosted chat cannot reach your TV merely by reading this repo.
-
-## Put it on a TV
-
-Use the staged [Samsung The Frame setup guide](docs/agent-tv-setup-guide.md) to understand the process used on my TV and adapt it to yours. It covers the remote's Developer Mode sequence, official Samsung tools, your own certificates and app identity, installation, visible checks and recovery.
-
-The signing and TV scripts are specific to my setup. Your agent will need to adapt the paths, signing profile, identity checks and installed-app IDs, then verify each stage with you. Installing the app and assigning the remote Home button are separate steps.
-
-| Area | Evidence and limits |
-| --- | --- |
-| Reference hardware | Samsung QA55LS03DAWXXY / LS03D, firmware 2130.0, Tizen 9.0, 32-bit ARM |
-| App installation | Signed installation and launch commands succeeded through 0.6.1. Latest rendering and remote feel still need physical observation. |
-| App launch and Home | Netflix/YouTube launch and physical Home from Netflix were confirmed on the reference setup. |
-| Still open | Normal power-on after streaming/Art Mode, corrected Smart Hub escape and native Art Mode destinations need definite physical checks. |
-| Other TVs | No compatibility claim. This is Tizen source; Android TV, Google TV, LG webOS and Roku need their own implementations. |
-
-The detailed [device record](docs/tv-status.md) separates observed results from SDK responses. Native Home/startup uses undocumented, guarded helpers; it is optional and can fail after firmware changes. Keep a recovery baseline before attempting that work. The app can be opened manually without it.
-
-## Develop and check
+## Develop
 
 ```sh
 npm run check
 npx playwright install chromium
 CLEANFRAME_PUBLIC_FONTS=1 npm run check:browser
+python3.12 -m venv .local/venv
+.local/venv/bin/pip install -r hisense/requirements.txt
+npm run check:hisense
+.local/venv/bin/python -m unittest discover -s hisense -p 'test_*.py'
 npm run check:public
-npm run export:public
 ```
 
-The browser checks use isolated Chromium profiles and a loopback preview. They never contact a TV. The public export creates `dist/CleanFrame-public-unsigned.wgt`, with public fonts and notices. It needs your own identity and signing before installation. It does not certify asset redistribution rights or device compatibility.
+All these checks are isolated from the TV. Read [development](docs/development.md), [testing](docs/testing.md), [contributing](CONTRIBUTING.md) and [agent guidance](docs/for-agents.md).
 
-| Location | Purpose |
-| --- | --- |
-| `app/` | Current packaged UI and runtime assets |
-| `scripts/` | Preview, validation, asset generation and reference TV tools |
-| [Development](docs/development.md) / [testing](docs/testing.md) | Runtime map, preferences, checks and device boundaries |
-| [Assets](docs/assets.md) / [third-party notices](THIRD_PARTY_NOTICES.md) | Rendering recipes, font separation and asset provenance |
-| [Asset sources](docs/asset-sources.md) | Photo credits and verification of the bundled third-party assets |
-| `.local/`, `dist/` | Ignored private setup, recovery data, generated files and packages |
+## Credits and licence
 
-## Contribute
+Based on [nthnclrk/CleanFrame](https://github.com/nthnclrk/CleanFrame), imported from commit `fa537d1892b71d2de2bf94c24cbff3812e9f70d5`. Nathan Clark's original copyright and MIT licence are retained in [LICENSE](LICENSE). Hisense changes are also MIT licensed. Selected [Sidee](https://github.com/Empi9245/Sidee) connection modules retain their own MIT notice and pinned [provenance](hisense/sidee/PROVENANCE.txt).
 
-Fork it, experiment and build something that suits your TV. If you find a useful fix or improve the setup instructions, contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before a larger change. Reports should include model, firmware and the observed result, with private identifiers removed.
-
-## Licence and credits
-
-CleanFrame's original code and documentation use the [MIT licence](LICENSE). Fonts, photographs and logos retain their own terms; read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Paid Pangram binaries are excluded from Git and public exports. A local package may include them, so keep personal builds separate from public downloads.
-
-The [release review](docs/public-release.md) records the publication checks. Third-party assets retain the terms listed in their notices. CleanFrame is an independent project with no Samsung or streaming-service affiliation.
-
-[TV Detox](https://github.com/Ansub/tv-detox) is a useful example of making an agent-assisted TV project approachable. Its Android setup is a different implementation; the prompts and instructions here are written for CleanFrame and Tizen.
+Fonts, photographs and service marks retain their own terms; see [third-party notices](THIRD_PARTY_NOTICES.md) and [asset sources](docs/asset-sources.md). This project is independent of Hisense, VIDAA and the streaming services.

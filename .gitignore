@@ -13,9 +13,11 @@ __pycache__/
 *.csr
 profiles.xml
 session.json
+certs.bin.k
+control-key
 certificate-password.txt
 
-# Proprietary fonts are injected from .local/ at preview/package time.
+# Proprietary fonts are injected from .local/ for optional local previews.
 /app/assets/private-fonts/
 PP*.ttf
 PP*.otf

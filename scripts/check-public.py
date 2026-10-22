@@ -29,7 +29,7 @@ def forbidden(name):
             or path.suffix.lower() in private_suffixes
             or (path.name.startswith('PP') and path.suffix.lower() in font_suffixes)
             or path.name.startswith('.env.')
-            or path.name in {'certificate-password.txt', 'profiles.xml', '.env', 'session.json'})
+            or path.name in {'certificate-password.txt', 'profiles.xml', '.env', 'session.json', 'certs.bin.k', 'control-key'})
 
 
 public_fonts = {'app/assets/manrope.woff2': 'e310b55a7fd9677f5e3555e6c6c4d064fa1f1d24393f0ddbe217cea12a8c432f'}
